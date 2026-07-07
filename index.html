@@ -16,6 +16,7 @@
     #result {
       font-size: 32px;
       line-height: 1.3;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -28,7 +29,7 @@
       const result = document.getElementById("result");
 
       if (!navigator.geolocation) {
-        result.innerHTML = "This device doesn't support location lookup.";
+        result.textContent = "This device doesn't support location lookup.";
         return;
       }
 
@@ -47,21 +48,21 @@
           const city = a.city || a.town || a.village;
 
           if (hood && suburb && city) {
-            result.innerHTML = `You're in the ${hood} neighborhood,<br> in the ${suburb} area of ${city}.`;
+            result.textContent = `You're in the ${hood} neighborhood,<br> in the ${suburb} area of ${city}.`;
           } else if (hood && city) {
-            result.innerHTML = `You're in the ${hood} neighborhood of ${city}.`;
+            result.textContent = `You're in the ${hood} neighborhood of ${city}.`;
           } else if (suburb && city) {
-            result.innerHTML = `You're in the ${suburb} area of ${city}.`;
+            result.textContent = `You're in the ${suburb} area of ${city}.`;
           } else if (city) {
-            result.innerHTML = `You're in ${city}.`;
+            result.textContent = `You're in ${city}.`;
           } else {
-            result.innerHTML = "I found your location, but not a specific neighborhood.";
+            result.textContent = "I found your location, but not a specific neighborhood.";
           }
         } catch {
-          result.innerHTML = "I got your location, but couldn't look up the neighborhood.";
+          result.textContent = "I got your location, but couldn't look up the neighborhood.";
         }
       }, () => {
-        result.innerHTML = "I couldn't get your location.";
+        result.textContent = "I couldn't get your location.";
       });
     }
 
