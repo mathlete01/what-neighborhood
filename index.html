@@ -8,13 +8,16 @@
 </head>
 <body>
   <h1>What neighborhood is this?</h1>
-  <button onclick="findNeighborhood()">Find my neighborhood</button>
-  <p id="result"></p>
+  <p id="result">Getting location...</p>
 
   <script>
     async function findNeighborhood() {
       const result = document.getElementById("result");
-      result.textContent = "Getting location...";
+
+      if (!navigator.geolocation) {
+        result.textContent = "This device doesn't support location lookup.";
+        return;
+      }
 
       navigator.geolocation.getCurrentPosition(async position => {
         const lat = position.coords.latitude;
@@ -30,16 +33,16 @@
           const suburb = a.suburb;
           const city = a.city || a.town || a.village;
 
-          if (hood && suburb) {
+          if (hood && suburb && city) {
             result.textContent = `You're in the ${hood} neighborhood, in the ${suburb} area of ${city}.`;
-          } else if (hood) {
+          } else if (hood && city) {
             result.textContent = `You're in the ${hood} neighborhood of ${city}.`;
-          } else if (suburb) {
+          } else if (suburb && city) {
             result.textContent = `You're in the ${suburb} area of ${city}.`;
           } else if (city) {
             result.textContent = `You're in ${city}.`;
           } else {
-            result.textContent = "I found your location, but not a neighborhood.";
+            result.textContent = "I found your location, but not a specific neighborhood.";
           }
         } catch {
           result.textContent = "I got your location, but couldn't look up the neighborhood.";
@@ -52,6 +55,8 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }
+
+    findNeighborhood();
   </script>
 </body>
 </html>
