@@ -57,6 +57,12 @@
     }
 
     findNeighborhood();
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        findNeighborhood();
+      }
+    });
   </script>
 </body>
 </html>
