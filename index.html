@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <title>What neighborhood is this?</title>
+</head>
+<body>
+  <h1>What neighborhood is this?</h1>
+  <button onclick="findNeighborhood()">Find my neighborhood</button>
+  <p id="result"></p>
+
+  <script>
+    async function findNeighborhood() {
+      const result = document.getElementById("result");
+      result.textContent = "Getting location...";
+
+      navigator.geolocation.getCurrentPosition(async position => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        try {
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          const a = data.address || {};
+
+          const hood = a.neighbourhood;
+          const suburb = a.suburb;
+          const city = a.city || a.town || a.village;
+
+          if (hood && suburb) {
+            result.textContent = `You're in the ${hood} neighborhood, in the ${suburb} area of ${city}.`;
+          } else if (hood) {
+            result.textContent = `You're in the ${hood} neighborhood of ${city}.`;
+          } else if (suburb) {
+            result.textContent = `You're in the ${suburb} area of ${city}.`;
+          } else if (city) {
+            result.textContent = `You're in ${city}.`;
+          } else {
+            result.textContent = "I found your location, but not a neighborhood.";
+          }
+        } catch {
+          result.textContent = "I got your location, but couldn't look up the neighborhood.";
+        }
+      }, () => {
+        result.textContent = "I couldn't get your location.";
+      });
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
