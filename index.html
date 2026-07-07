@@ -5,9 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="manifest.json" />
   <title>What neighborhood is this?</title>
+  <style>
+    body {
+      background-color: #1C2228;
+      color: #F2F2F2;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 30px;
+    }
+  
+    #result {
+      font-size: 32px;
+      line-height: 1.3;
+    }
+  </style>
 </head>
 <body>
-  <h1>What neighborhood is this?</h1>
+  <h3>What neighborhood is this?</h3>
   <p id="result">Getting location...</p>
 
   <script>
@@ -34,7 +47,7 @@
           const city = a.city || a.town || a.village;
 
           if (hood && suburb && city) {
-            result.textContent = `You're in the ${hood} neighborhood, in the ${suburb} area of ${city}.`;
+            result.textContent = `You're in the ${hood} neighborhood,<br> in the ${suburb} area of ${city}.`;
           } else if (hood && city) {
             result.textContent = `You're in the ${hood} neighborhood of ${city}.`;
           } else if (suburb && city) {
