@@ -30,6 +30,25 @@
       line-height: 1.3;
       white-space: pre-line;
     }
+
+    #rescanBtn {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.9rem 1.2rem;
+      border: 0;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background-color: #F2D35C;
+      color: #1C2228;
+    }
+
+    #rescanBtn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
     footer {
       position: fixed;
       bottom: 30px;
@@ -56,9 +75,13 @@
     }
   </style>
 </head>
+
 <body>
   <h3>📍What neighborhood is this?</h3>
+
   <p id="result">Getting location...</p>
+
+  <button id="rescanBtn" type="button">Check Again</button>
 
   <footer>
     Brought to you by <span class="brand"><a href="https://www.sallin.com">Sallin.com</a></span><br>
@@ -66,46 +89,93 @@
   </footer>
   
   <script>
-    async function findNeighborhood() {
-      const result = document.getElementById("result");
+    const result = document.getElementById("result");
+    const rescanBtn = document.getElementById("rescanBtn");
 
+    let hasCompletedInitialScan = false;
+
+    function showRescanButtonAfterFirstUse() {
+      if (!hasCompletedInitialScan) {
+        hasCompletedInitialScan = true;
+        rescanBtn.style.display = "inline-block";
+      }
+    }
+
+    function setLoadingState(isLoading) {
+      rescanBtn.disabled = isLoading;
+      rescanBtn.textContent = isLoading ? "Checking..." : "Check Again";
+    }
+
+    function formatLocationResult(address) {
+      const hood = address.neighbourhood;
+      const suburb = address.suburb;
+      const city = address.city || address.town || address.village;
+
+      if (hood && suburb && city) {
+        return `You're in the <span class="place">${hood}</span> neighborhood,<br> in the <span class="place">${suburb}</span> area of ${city}.`;
+      } else if (hood && city) {
+        return `You're in the <span class="place">${hood}</span> neighborhood of ${city}.`;
+      } else if (suburb && city) {
+        return `You're in the <span class="place">${suburb}</span> area of ${city}.`;
+      } else if (city) {
+        return `You're in ${city}.`;
+      } else {
+        return "I found your location, but not a specific neighborhood 😕";
+      }
+    }
+
+    async function findNeighborhood() {
       if (!navigator.geolocation) {
         result.innerHTML = "This device doesn't support location lookup.";
+        showRescanButtonAfterFirstUse();
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(async position => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
+      result.innerHTML = "Getting location...";
+      setLoadingState(true);
 
-        try {
-          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-          const res = await fetch(url);
-          const data = await res.json();
-          const a = data.address || {};
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
 
-          const hood = a.neighbourhood;
-          const suburb = a.suburb;
-          const city = a.city || a.town || a.village;
+          try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const address = data.address || {};
 
-          if (hood && suburb && city) {
-            result.innerHTML = `You're in the <span class="place">${hood}</span> neighborhood,<br> in the <span class="place">${suburb}</span> area of ${city}.`;
-          } else if (hood && city) {
-            result.innerHTML = `You're in the <span class="place">${hood}</span> neighborhood of ${city}.`;
-          } else if (suburb && city) {
-            result.innerHTML = `You're in the <span class="place">${suburb}</span> area of ${city}.`;
-          } else if (city) {
-            result.innerHTML = `You're in ${city}.`;
-          } else {
-            result.innerHTML = "I found your location, but not a specific neighborhood 😕";
+            result.innerHTML = formatLocationResult(address);
+          } catch {
+            result.innerHTML = "I got your location, but couldn't look up the neighborhood 😕";
           }
-        } catch {
-          result.innerHTML = "I got your location, but couldn't look up the neighborhood 😕";
+
+          setLoadingState(false);
+          showRescanButtonAfterFirstUse();
+        },
+        error => {
+          if (error.code === 1) {
+            result.innerHTML = "Location permission was denied 😕";
+          } else if (error.code === 2) {
+            result.innerHTML = "Your location is currently unavailable 😕";
+          } else if (error.code === 3) {
+            result.innerHTML = "Location lookup timed out 😕";
+          } else {
+            result.innerHTML = "Sorry, I couldn't get your location 😕";
+          }
+
+          setLoadingState(false);
+          showRescanButtonAfterFirstUse();
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
         }
-      }, () => {
-        result.innerHTML = "Sorry, I couldn't get your location  😕";
-      });
+      );
     }
+
+    rescanBtn.addEventListener("click", findNeighborhood);
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
